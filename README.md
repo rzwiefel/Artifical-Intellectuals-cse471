@@ -1,5 +1,5 @@
 # Artifical-Intellectuals-cse471
-***CSE 471 Project Github***
+### CSE 471 Project Github
 
 This is the project git for:
 
@@ -16,10 +16,10 @@ This is the project git for:
 
 A package can be ran from the root folder like so:
 
-`    python hw1.c393`
+`    python -m hw1.c393.main`
 
 or
 
-`    python project.part1.informed_search`
+`    python -m project.part1.informed_search`
 
 **NOTE:** your `python`  might be linked to `python3` if on linux/mac
