@@ -92,17 +92,13 @@ def a_star_search(G, num_cards):
             return node
 
         count += 1
-        print("\nnum candidates: " + str(len(candidates)))
+        # print("\nnum candidates: " + str(len(candidates)))
         for candidate in candidates:
-            # start = time.time()
             child = node[:] + [candidate]
 
             exposed_nodes = set(G.neighbors(candidate) + [candidate])
             child_candidates = filter(lambda n: n not in exposed_nodes, candidates[:])
-            x = evaluation_function(G, child, num_cards, child_candidates)
-            print(x)
-            frontier.put((x, child))
-            # print("time: " + str(time.time() - start))
+            frontier.put((evaluation_function(G, child, num_cards, child_candidates), child))
 
 
 def main():
