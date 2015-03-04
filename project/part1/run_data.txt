@@ -1,0 +1,22 @@
+Format
+
+c: n t
+c = number of cards given out
+n = number of nodes expanded
+t = running time in seconds
+
+Runs
+
+Informed on input.txt with 10 large groups of noninterconnected friends
+1: 1 0.4522988796234131
+2: 127 65.71753311157227
+3: 146 73.26853203773499
+4: 235 107.81140995025635
+5: 507 192.79470586776733
+
+Informed on input1.txt with 10 same sized friend groups of all mutual friends (all 10 have same mutual friends)
+1: 1 0.030019044876098633
+2: 21 0.2901899814605713
+3: 201 2.3375508785247803
+4: 1641 17.410534143447876
+5: 11721 114.23366498947144
