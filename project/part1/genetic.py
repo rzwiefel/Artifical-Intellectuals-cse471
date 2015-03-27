@@ -1,11 +1,11 @@
 import networkx as nx
 import time
 import random
-import threading
+import multiprocessing
+import functools
 
 
-N = 10
-lock = threading.Lock()
+lock = multiprocessing.Lock()
 
 
 def load_data(file):
@@ -91,53 +91,51 @@ def rand_node(G, size):
     return node
 
 
-def worker(G, population, repro_prob, new_population):
+def worker(G, population, repro_prob, new_population, mutation_prob):
     node1_index = get_reproduction_candidate(repro_prob)
     node2_index = get_reproduction_candidate(repro_prob, node1_index)
     child_node1, child_node2 = crossover_function(population[node1_index], population[node2_index])
 
-    if random.random() < .05:
+    if random.random() < mutation_prob:
         # print("Mutation")
         mutate(G, child_node1)
-    if random.random() < .05:
+    if random.random() < mutation_prob:
         # print("Mutation")
         mutate(G, child_node2)
 
-    lock.acquire()
-    new_population.extend([child_node1, child_node2])
-    lock.release()
+    return child_node1, child_node2
 
 
-def genetic_algorithm(G, n, k, iterations):
+def mt_fitness(args):
+    return fitness_function(*args)
+
+
+def genetic_algorithm(G, n, k, iterations, mutation_prob):
     population = [rand_node(G, n) for i in range(k)]
 
     max_fitness = 0
     max_fitness_node = []
 
-    for i in range(iterations):
-        fitnesses = [fitness_function(G, node) for node in population]
-        if i % 1000 == 0:
+    with multiprocessing.Pool() as pool:
+        for i in range(iterations):
+            # start = time.time()
+            fitnesses = list(pool.map(mt_fitness, [(G, node) for node in population]))
+
+            # if i % 1000 == 0:
             print("Fitness {!s}: avg: {!s}, min: {!s}, max: {!s}".format(i, sum(fitnesses) / k, min(fitnesses), max(fitnesses)))
 
-        current_max_fitness = max(fitnesses)
-        if max_fitness < current_max_fitness:
-            max_fitness = current_max_fitness
-            max_fitness_node = population[fitnesses.index(max_fitness)]
-            print("New max: " + str(max_fitness))
+            current_max_fitness = max(fitnesses)
+            if max_fitness < current_max_fitness:
+                max_fitness = current_max_fitness
+                max_fitness_node = population[fitnesses.index(max_fitness)]
+                print("New max: " + str(max_fitness))
 
-        repro_prob = reproduction_probability_distribution(fitnesses)
+            repro_prob = reproduction_probability_distribution(fitnesses)
 
-        new_population = []
-        threads = []
-        for i in range(len(population) // 2):
-            thread = threading.Thread(target=worker, args=(G, population, repro_prob, new_population))
-            thread.start()
-            threads.append(thread)
-
-        for thread in threads:
-            thread.join()
-
-        population = new_population
+            new_pop_func = functools.partial(worker, G, population, repro_prob, mutation_prob)
+            population = list(pool.map(new_pop_func, [i for i in range(len(population) // 2)]))
+            population = functools.reduce(lambda x, y: x + [i for i in y], population, [])
+            # print(time.time() - start)
 
     return max_fitness, max_fitness_node
 
@@ -145,12 +143,11 @@ def genetic_algorithm(G, n, k, iterations):
 if __name__ == '__main__':
     print("running project.part1.genetic")
 
-
     G = load_data("348.edges.txt")
     # for i in range(2, 7, 2):
     # start = time.time()
     # print(i, end=": ")
-    print(genetic_algorithm(G, 7, 16, 100000))
+    print(genetic_algorithm(G, 7, 8, 10000, .05))
 
     # print(solution)
     # print(time.time() - start)
