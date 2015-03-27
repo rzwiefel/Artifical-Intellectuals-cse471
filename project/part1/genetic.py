@@ -91,7 +91,7 @@ def rand_node(G, size):
     return node
 
 
-def worker(G, population, repro_prob, new_population, mutation_prob):
+def worker(G, population, repro_prob, mutation_prob, i):
     node1_index = get_reproduction_candidate(repro_prob)
     node2_index = get_reproduction_candidate(repro_prob, node1_index)
     child_node1, child_node2 = crossover_function(population[node1_index], population[node2_index])
@@ -121,8 +121,8 @@ def genetic_algorithm(G, n, k, iterations, mutation_prob):
             # start = time.time()
             fitnesses = list(pool.map(mt_fitness, [(G, node) for node in population]))
 
-            # if i % 1000 == 0:
-            print("Fitness {!s}: avg: {!s}, min: {!s}, max: {!s}".format(i, sum(fitnesses) / k, min(fitnesses), max(fitnesses)))
+            if i % 1000 == 0:
+                print("Fitness {!s}: avg: {!s}, min: {!s}, max: {!s}".format(i, sum(fitnesses) / k, min(fitnesses), max(fitnesses)))
 
             current_max_fitness = max(fitnesses)
             if max_fitness < current_max_fitness:
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     # for i in range(2, 7, 2):
     # start = time.time()
     # print(i, end=": ")
-    print(genetic_algorithm(G, 7, 8, 10000, .05))
+    print(genetic_algorithm(G, 7, 8, 1000, .05))
 
     # print(solution)
     # print(time.time() - start)
