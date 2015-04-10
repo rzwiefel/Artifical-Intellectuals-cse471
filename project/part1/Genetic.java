@@ -1,4 +1,3 @@
-package cse471_part1_genetic;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
-public class Genetic {
+public class Main {
 	public static final String FILENAME = "348.edges.txt";
 	public static HashMap<Integer, Integer> loc = null;
 	public static int count;
@@ -43,20 +42,26 @@ public class Genetic {
 		ArrayList<Integer> unexposed = new ArrayList<>();
 		count = (int) inputList.stream().mapToInt(arr -> {return arr[0];}).distinct().count();
 		loc = new HashMap<>();
+		HashMap<Integer, Integer> revloc = new HashMap<>();
 		int im = 0;
 		for(Integer i : inputList.stream().mapToInt(a -> a[0]).distinct().toArray()) {
 			loc.put(i, im);
+			revloc.put(im, i);
 			unexposed.add(im++);
 		}
+//		List<Integer> tl = new ArrayList<>();// {208, 203, 77, 57, 75, 26, 160, 114, 53, 9} ;
+//		tl.add(208);tl.add(203);tl.add(77);tl.add(57);tl.add(75);tl.add(26);tl.add(160);tl.add(114);tl.add(53);tl.add(9);
+//		tl.forEach(p -> System.out.print(" " + revloc.get(p)));
+//		System.exit(0);
 		
 		boolean[][] graph = new boolean[count][count];
 		for (Integer[] arr : inputList) {
 			makeFriend(graph, loc.get(arr[0]), loc.get(arr[1]));
 		}
 		
-		int n = 7; //Number of cards
+		int n = 10; //Number of cards
 		int k = 8; //Number of nodes per thread
-		int iterations = 100000;
+		int iterations = 1000;
 		double mutationProb = 0.05;
 		
 		List<Thread> threadList = new ArrayList<>();
