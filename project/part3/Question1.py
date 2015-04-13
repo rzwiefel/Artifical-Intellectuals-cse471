@@ -36,13 +36,35 @@ def compute_payoff(num_atk_vectors, num_def_vectors, V, B_atk):
     return round(payoff, 2)
 
 
+def is_dominant_strat(iIndex, jIndex, payoff_matrix, V):
+    result = True
+
+    for k in range(0, V):
+        current_atk_payoff = payoff_matrix[iIndex][k]
+        for i in range(0, V):
+            if i != iIndex and payoff_matrix[i][k][0] >= current_atk_payoff:
+                result = False
+
+    for k in range(0, V):
+        current_def_payoff = payoff_matrix[k][jIndex][1]
+        for j in range(0, V):
+            if j != jIndex and payoff_matrix[k][j][1] >= current_def_payoff:
+                result = False
+
+    return result
+
+
 def is_nash_equilibrium(iIndex, jIndex, payoff_matrix, V):
     result = True
     current_atk_payoff = payoff_matrix[iIndex][jIndex][0]
     current_def_payoff = payoff_matrix[iIndex][jIndex][1]
+
+    # check if attacker can get a bigger payoff
     for i in range(0, V):
         if i != iIndex and payoff_matrix[i][jIndex][0] > current_atk_payoff:
             result = False
+
+    # check if defender can get a bigger payoff
     for j in range(0, V):
         if j != jIndex and payoff_matrix[iIndex][j][1] > current_def_payoff:
             result = False
@@ -74,10 +96,12 @@ def compute_payoff_matrix(attacker_cost):
         for j in range(0, V):
             if is_nash_equilibrium(i, j, payoff_matrix, V):
                 print("Nash Equilibrium at " + str(i+1) + ", " + str(j+1) + ": " + str(payoff_matrix[i][j]))
+            if is_dominant_strat(i, j, payoff_matrix, V):
+                print("Dominant Strategy Equilibrium at " + str(i+1) + ", " + str(j+1) + ": " + str(payoff_matrix[i][j]))
 
 
 if __name__ == '__main__':
     # used to test if the Nash Equilibrium method was working correctly
     # matrix = [[[-4, -4], [0, -5]], [[-5, 0], [-1, -1]]] #prisoner's dilemma
-    # print(is_nash_equilibrium(0, 0, matrix, 2))
-    compute_payoff_matrix(100)  # try some more values of C_atk here
+    # print(is_dominant_strat(0, 0, matrix, 2))
+    compute_payoff_matrix(9899)  # try some more values of C_atk here

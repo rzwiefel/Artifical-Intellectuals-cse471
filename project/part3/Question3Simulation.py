@@ -18,7 +18,7 @@ if __name__ == '__main__':
     k = 100
     mean_attacker_payoff = 0
     mean_defender_payoff = 0
-    for k in range(0, k):
+    for a in range(0, k):
         atk_vectors = []
         def_vectors = []
         M_atk_vectors = []
