@@ -77,5 +77,5 @@ if __name__ == '__main__':
     mean_attacker_payoff = float(mean_attacker_payoff) / float(k)
     mean_defender_payoff = float(mean_defender_payoff) / float(k)
 
-    print(mean_attacker_payoff)
-    print(mean_defender_payoff)
+    print("Attacker Payoff: " + str(mean_attacker_payoff))
+    print("CactusCard Payoff: " + str(mean_defender_payoff))

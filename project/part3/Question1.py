@@ -104,4 +104,4 @@ if __name__ == '__main__':
     # used to test if the Nash Equilibrium method was working correctly
     # matrix = [[[-4, -4], [0, -5]], [[-5, 0], [-1, -1]]] #prisoner's dilemma
     # print(is_dominant_strat(0, 0, matrix, 2))
-    compute_payoff_matrix(9899)  # try some more values of C_atk here
+    compute_payoff_matrix(45)  # try some more values of C_atk here
