@@ -6,12 +6,14 @@
 
 package classify;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Random;
+import java.util.Scanner;
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.Logistic;
-import weka.classifiers.meta.Bagging;
-import weka.classifiers.trees.J48;
+import weka.classifiers.meta.AdaBoostM1;
+import weka.classifiers.trees.DecisionStump;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -24,33 +26,140 @@ import weka.core.converters.ConverterUtils.DataSource;
  */
 public class Classifier {
 
+    //for finding number of missing values in each row
+    public static void missingValuesRows(Instances data) {
+        int[] missingValues = new int[690];
+        Instance example;
+        String value = "";
+        //get number of missing attributes per row
+        for(int i = 0; i < 690; i++) {
+            example = data.instance(i);
+            for(int j = 0; j < 15; j++) {
+                if(example.attribute(j).isNominal()) {
+                    value = example.stringValue(j);
+                }
+                else if(example.attribute(j).isNumeric()) {
+                    value = Double.toString(example.value(j));
+                }
+                if(value.equals("?")) {
+                    missingValues[i]++;
+                }
+            }
+        }
+        //get how many times i attributes are missing
+        int[] frequency = new int[15];
+        for(int i = 0; i < 690; i++) {
+            frequency[missingValues[i]]++;
+        }
+        System.out.println("Number of missing attributes per row:");
+        for(int i = 0; i < 15; i++) {
+            System.out.println(i + ": " + frequency[i]);
+        }
+    }
+    
+    //reads a .txt file - for fixed input file
+    public static Instances readFile(String fileName) {
+        File f = new File(fileName);
+        double[][] dInput = new double[690][6];
+        String[][] strInput = new String[690][10];
+        try {
+            Scanner in = new Scanner(f);
+            for(int i = 0; i < 690; i++) {
+                strInput[i][0] = in.next();
+                dInput[i][0] = in.nextDouble();
+                dInput[i][1] = in.nextDouble();
+                
+                strInput[i][1] = in.next();
+                
+                strInput[i][2] = in.next();
+                
+                strInput[i][3] = in.next();
+                
+                strInput[i][4] = in.next();
+                
+                dInput[i][2] = in.nextDouble();
+                
+                strInput[i][5] = in.next();
+                
+                strInput[i][6] = in.next();
+                dInput[i][3] = in.nextDouble();
+                strInput[i][7] = in.next();
+                strInput[i][8] = in.next();
+                dInput[i][4] = in.nextDouble();
+                dInput[i][5] = in.nextDouble();
+                strInput[i][9] = in.next();
+            }
+            //read old data and change the data
+            DataSource input = new DataSource("crx2.csv");
+            Instances data = input.getDataSet();
+            Instance template = (Instance)data.instance(0).copy();
+            Instance example;
+            for(int i = 0; i < 690; i++) {
+                data.delete(0);
+            }
+            for(int i = 0; i < 690; i++) {
+                example = (Instance)template.copy();
+                example.setValue(0, strInput[i][0]);
+                
+                example.setValue(1, dInput[i][0]);
+                
+                example.setValue(2, dInput[i][1]);
+                
+                example.setValue(3, strInput[i][1]);
+                example.setValue(4, strInput[i][2]);
+                example.setValue(5, strInput[i][3]);
+                example.setValue(6, strInput[i][4]);
+                example.setValue(7, dInput[i][2]);
+                example.setValue(8, strInput[i][5]);
+                example.setValue(9, strInput[i][6]);
+                example.setValue(10, dInput[i][3]);
+                example.setValue(11, strInput[i][7]);
+                example.setValue(12, strInput[i][8]);
+                example.setValue(13, dInput[i][4]);
+                example.setValue(14, dInput[i][5]);
+                example.setValue(15, strInput[i][9]);
+                System.out.println(example.toString());
+                data.add(example);
+            }
+            
+            return data;
+        }
+        catch(Exception e) {
+            return null;
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         //read in data
         try {
-            DataSource input = new DataSource("crx2.csv");
+            DataSource input = new DataSource("fixed_with_commas_ab.csv");
             Instances data = input.getDataSet();
+            //Instances data = readFile("newfixed.txt");
+            //missingValuesRows(data);
             
             setAttributeValues(data);
             data.setClassIndex(data.numAttributes() - 1);
             
             
-            //Logistic regression
-            Logistic logReg = new Logistic();
+            //boosting
+            AdaBoostM1 boosting = new AdaBoostM1();
+            boosting.setNumIterations(25);
+            boosting.setClassifier(new DecisionStump());
             
             //build the classifier
-            logReg.buildClassifier(data);
+            boosting.buildClassifier(data);
             
             //evaluate using 10-fold cross validation
             Evaluation e1 = new Evaluation(data);
-            e1.crossValidateModel(logReg, data, 10, new Random(1));
+            e1.crossValidateModel(boosting, data, 10, new Random(1));
             
             DecimalFormat nf = new DecimalFormat("0.000");
             
-            System.out.println("Results of Logistic Regression:");
-            System.out.println(logReg.toString());
+            System.out.println("Results of Boosting with Decision Stumps:");
+            System.out.println(boosting.toString());
             System.out.println("Results of Cross Validation:");
             System.out.println("Number of correctly classified instances: " + e1.correct() + " (" + nf.format(e1.pctCorrect()) + "%)");
             System.out.println("Number of incorrectly classified instances: " + e1.incorrect() + " (" + nf.format(e1.pctIncorrect()) + "%)");
@@ -73,35 +182,29 @@ public class Classifier {
             System.out.println();
             
             
-            //Bagging using decision tree
-            Bagging bag = new Bagging();
+            //logistic regression
+            Logistic l = new Logistic();
+            l.buildClassifier(data);
             
-            J48 bagTree = new J48(); //classifier to use for bagging
-            bagTree.setConfidenceFactor((float).1);
-            bag.setClassifier(bagTree);
+            e1 = new Evaluation(data);
             
-            bag.buildClassifier(data);
-            
-            //evaluate using 10-fold cross validation
-            Evaluation e2 = new Evaluation(data);
-            e2.crossValidateModel(logReg, data, 10, new Random(1));
-            
-            System.out.println("Results of bagging using Decision Tree:");
-            System.out.println(bag.toString());
+            e1.crossValidateModel(l, data, 10, new Random(1));
+            System.out.println("Results of Logistic Regression:");
+            System.out.println(l.toString());
             System.out.println("Results of Cross Validation:");
-            System.out.println("Number of correctly classified instances: " + e2.correct() + " (" + nf.format(e2.pctCorrect()) + "%)");
-            System.out.println("Number of incorrectly classified instances: " + e2.incorrect() + " (" + nf.format(e2.pctIncorrect()) + "%)");
+            System.out.println("Number of correctly classified instances: " + e1.correct() + " (" + nf.format(e1.pctCorrect()) + "%)");
+            System.out.println("Number of incorrectly classified instances: " + e1.incorrect() + " (" + nf.format(e1.pctIncorrect()) + "%)");
             
-            System.out.println("TP Rate: " + nf.format(e2.weightedTruePositiveRate()) + "%");
-            System.out.println("FP Rate: " + nf.format(e2.weightedFalsePositiveRate()) + "%");
-            System.out.println("Precision: " + nf.format(e2.weightedPrecision()) + "%");
-            System.out.println("Recall: " + nf.format(e2.weightedRecall()) + "%");
+            System.out.println("TP Rate: " + nf.format(e1.weightedTruePositiveRate()) + "%");
+            System.out.println("FP Rate: " + nf.format(e1.weightedFalsePositiveRate()) + "%");
+            System.out.println("Precision: " + nf.format(e1.weightedPrecision()) + "%");
+            System.out.println("Recall: " + nf.format(e1.weightedRecall()) + "%");
             
             System.out.println();
             System.out.println("Confusion Matrix:");
-            for(int i = 0; i < e2.confusionMatrix().length; i++) {
-                for(int j = 0; j < e2.confusionMatrix()[0].length; j++) {
-                    System.out.print(e2.confusionMatrix()[i][j] + "   ");
+            for(int i = 0; i < e1.confusionMatrix().length; i++) {
+                for(int j = 0; j < e1.confusionMatrix()[0].length; j++) {
+                    System.out.print(e1.confusionMatrix()[i][j] + "   ");
                 }
                 System.out.println();
             }
