@@ -28,11 +28,15 @@ public class Classifier {
 
     //for finding number of missing values in each row
     public static void missingValuesRows(Instances data) {
-        int[] missingValues = new int[690];
+        int[] missingValues = new int[data.numInstances()];
+        for(int i = 0; i < data.numInstances(); i++) {
+            missingValues[i] = 0;
+        }
         Instance example;
         String value = "";
         //get number of missing attributes per row
-        for(int i = 0; i < 690; i++) {
+        int missValues = 0;
+        for(int i = 0; i < data.numInstances(); i++) {
             example = data.instance(i);
             for(int j = 0; j < 15; j++) {
                 if(example.attribute(j).isNominal()) {
@@ -41,16 +45,25 @@ public class Classifier {
                 else if(example.attribute(j).isNumeric()) {
                     value = Double.toString(example.value(j));
                 }
-                if(value.equals("?")) {
+                if(value.equals("?") || value.equals("NaN")) {
                     missingValues[i]++;
+                    missValues++;
                 }
             }
         }
+        System.out.println("Number of Missing Values: " + missValues);
         //get how many times i attributes are missing
         int[] frequency = new int[15];
-        for(int i = 0; i < 690; i++) {
+        for(int i = 0; i < data.numInstances(); i++) {
             frequency[missingValues[i]]++;
         }
+        int numRows = 0;
+        for(int i = 0; i < data.numInstances(); i++) {
+            if(missingValues[i] > 0) {
+                numRows++;
+            }
+        }
+        System.out.println("Number of rows with missing values: " + numRows);
         System.out.println("Number of missing attributes per row:");
         for(int i = 0; i < 15; i++) {
             System.out.println(i + ": " + frequency[i]);
@@ -135,10 +148,10 @@ public class Classifier {
     public static void main(String[] args) {
         //read in data
         try {
-            DataSource input = new DataSource("fixed_with_commas_ab.csv");
+            DataSource input = new DataSource("no_missing_values.csv");
             Instances data = input.getDataSet();
             //Instances data = readFile("newfixed.txt");
-            //missingValuesRows(data);
+            missingValuesRows(data);
             
             setAttributeValues(data);
             data.setClassIndex(data.numAttributes() - 1);
@@ -164,10 +177,10 @@ public class Classifier {
             System.out.println("Number of correctly classified instances: " + e1.correct() + " (" + nf.format(e1.pctCorrect()) + "%)");
             System.out.println("Number of incorrectly classified instances: " + e1.incorrect() + " (" + nf.format(e1.pctIncorrect()) + "%)");
             
-            System.out.println("TP Rate: " + nf.format(e1.weightedTruePositiveRate()) + "%");
-            System.out.println("FP Rate: " + nf.format(e1.weightedFalsePositiveRate()) + "%");
-            System.out.println("Precision: " + nf.format(e1.weightedPrecision()) + "%");
-            System.out.println("Recall: " + nf.format(e1.weightedRecall()) + "%");
+            System.out.println("TP Rate: " + nf.format(e1.weightedTruePositiveRate()*100) + "%");
+            System.out.println("FP Rate: " + nf.format(e1.weightedFalsePositiveRate()*100) + "%");
+            System.out.println("Precision: " + nf.format(e1.weightedPrecision()*100) + "%");
+            System.out.println("Recall: " + nf.format(e1.weightedRecall()*100) + "%");
             
             System.out.println();
             System.out.println("Confusion Matrix:");
@@ -195,10 +208,10 @@ public class Classifier {
             System.out.println("Number of correctly classified instances: " + e1.correct() + " (" + nf.format(e1.pctCorrect()) + "%)");
             System.out.println("Number of incorrectly classified instances: " + e1.incorrect() + " (" + nf.format(e1.pctIncorrect()) + "%)");
             
-            System.out.println("TP Rate: " + nf.format(e1.weightedTruePositiveRate()) + "%");
-            System.out.println("FP Rate: " + nf.format(e1.weightedFalsePositiveRate()) + "%");
-            System.out.println("Precision: " + nf.format(e1.weightedPrecision()) + "%");
-            System.out.println("Recall: " + nf.format(e1.weightedRecall()) + "%");
+            System.out.println("TP Rate: " + nf.format(e1.weightedTruePositiveRate()*100) + "%");
+            System.out.println("FP Rate: " + nf.format(e1.weightedFalsePositiveRate()*100) + "%");
+            System.out.println("Precision: " + nf.format(e1.weightedPrecision()*100) + "%");
+            System.out.println("Recall: " + nf.format(e1.weightedRecall()*100) + "%");
             
             System.out.println();
             System.out.println("Confusion Matrix:");
@@ -217,8 +230,8 @@ public class Classifier {
     
     public static void setAttributeValues(Instances data) {
         Instance example;
-        String[][] savedData = new String[690][10];
-        for(int i = 0; i < 690; i++) {
+        String[][] savedData = new String[data.numInstances()][10];
+        for(int i = 0; i < data.numInstances(); i++) {
             example = data.instance(i);
             savedData[i][0] = example.stringValue(0);
             savedData[i][1] = example.stringValue(3);
@@ -326,7 +339,7 @@ public class Classifier {
         data.deleteAttributeAt(15);
         data.insertAttributeAt(new Attribute("C", attVals), 15);
 
-        for(int i = 0; i < 690; i++) {
+        for(int i = 0; i < data.numInstances(); i++) {
 
             if(!"?".equals(savedData[i][0])) {
                 data.instance(i).setValue(0, savedData[i][0]);
