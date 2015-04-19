@@ -196,7 +196,8 @@ def a_star_search(G, num_cards, pool):
             return evalResults[minimumI][1]
 
         for i in range(0, num_nodes):
-            for j in range(0, len(evalResults[i][2])):
+            evalResults[i][2] = sorted(evalResults[i][2], key=lambda x: x[0])
+            for j in range(0, min(4, len(evalResults[i][2]))):
                 frontier.put((evalResults[i][2][j][0], [evalResults[i][2][j][1], evalResults[i][2][j][2], evalResults[i][2][j][3]]))
 
         gc.collect()

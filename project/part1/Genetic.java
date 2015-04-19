@@ -22,7 +22,7 @@ public class Main {
 	public static volatile List<Integer> globalMaxFitnessNode = null;
 	public static Object fileLock = new Object();
 	public static final String OUTFILENAME = "genetic_algorithm_output.txt";
-	
+
 	public static void main(String[] args) {
 		long start = System.nanoTime();
 		ArrayList<Integer[]> inputList = new ArrayList<>();
@@ -53,19 +53,19 @@ public class Main {
 //		tl.add(208);tl.add(203);tl.add(77);tl.add(57);tl.add(75);tl.add(26);tl.add(160);tl.add(114);tl.add(53);tl.add(9);
 //		tl.forEach(p -> System.out.print(" " + revloc.get(p)));
 //		System.exit(0);
-		
+
 		boolean[][] graph = new boolean[count][count];
 		for (Integer[] arr : inputList) {
 			makeFriend(graph, loc.get(arr[0]), loc.get(arr[1]));
 		}
-		
+
 		int n = 10; //Number of cards
-		int k = 8; //Number of nodes per thread
-		int iterations = 1000;
+		int k = 100; //Number of nodes per thread
+		int iterations = 1000000;
 		double mutationProb = 0.05;
-		
+
 		List<Thread> threadList = new ArrayList<>();
-		int tcount = 1;//Runtime.getRuntime().availableProcessors();
+		int tcount = 12;//Runtime.getRuntime().availableProcessors();
 		for (int i = 0; i < tcount; ++i) {
 			Thread t = new Thread(() -> geneticAlgorithm(graph, unexposed, n, k, iterations, mutationProb));
 			threadList.add(t);
@@ -74,16 +74,16 @@ public class Main {
 
 		threadList.forEach(t -> {try {t.join();}catch(Exception e){e.printStackTrace();};});
 		System.out.println("All finished. (in " + (System.nanoTime()-start)/1000000000 + " s)");
-		
-		
+
+
 	}//end of Main function
-	
+
 	public static void geneticAlgorithm(boolean[][] graph, List<Integer> unexposed, int n, int k, int iter, double mutProb) {
 		double maxFitness = 0;
 		List<Integer> maxFitnessNode = null;
 		final List<List<Integer>> population = new ArrayList<>();
 		IntStream.range(0, k).forEach(i -> population.add(randNode(graph, n)));
-			
+
 		for (int iterNum = 0; iterNum < iter; ++iterNum) {
 			List<Double> fitnesses = population.stream()
 					.mapToDouble(p -> fitness(graph, unexposed, p))
@@ -112,7 +112,7 @@ public class Main {
 					});
 		}//end of outer For
 	}
-	
+
 	public static void updateMax(double newMax, List<Integer> node) {
 		synchronized (Main.class) {
 			if (newMax < globalMaxFitness) return;
@@ -146,12 +146,12 @@ public class Main {
 		//t.setDaemon(true);
 		t.start();
 	}
-	
+
 	public static void makeFriend(boolean[][] graph, Integer i, Integer j) {
 		graph[i][j] = true;
 		graph[j][i] = true;
 	}
-	
+
 	public static boolean[][] copyGraph(boolean[][] graph) {
 		boolean[][] newGraph = new boolean[count][count];
 		for (int i = 0; i < count; ++i) {
@@ -161,7 +161,7 @@ public class Main {
 		}
 		return newGraph;
 	}
-	
+
 	public static <T> List<T> copyList(List<T> toCopy) {
 		List<T> copied = new ArrayList<>();
 		for (T i : toCopy) {
@@ -170,7 +170,7 @@ public class Main {
 		}
 		return copied;
 	}
-	
+
 	public static double fitness(boolean[][] _graph, List<Integer> _unexposed, List<Integer> node) {
 		float fitness = 0;
 		boolean[][] graph = _graph;//copyGraph(_graph);
@@ -183,17 +183,17 @@ public class Main {
 			int n_given_card = i;
 			List<Integer> new_exposed_people = neighbors(graph, node.get(i));
 			int new_exposed = new_exposed_people.size();
-			float adoption_prob = 0f;
-			if (n_exposed + n_given_card != 0) adoption_prob = (float) Math.max(.1, 1-1/(n_exposed + n_given_card));
-			else adoption_prob = .1f;
+			double adoption_prob = 0;
+			if (n_exposed + n_given_card != 0) adoption_prob = (double) Math.max(.1, 1-1/(n_exposed + n_given_card));
+			else adoption_prob = .1;
 			fitness += 1 + new_exposed * adoption_prob;
-			
+
 			unexposed.removeAll(new_exposed_people);
 			unexposed.remove(Integer.valueOf(node.get(i)));
 		}
 		return fitness;
 	}
-	
+
 	public static List<Integer> neighbors(boolean[][] graph, int person) {
 		List<Integer> neighbors = new ArrayList<>();
 		for (int i = 0; i < count; ++i) {
@@ -201,7 +201,7 @@ public class Main {
 		}
 		return neighbors;
 	}
-	
+
 	public static void crossover(List<Integer> n1, List<Integer> n2) {
 		int crossover_point = new Random().nextInt(n1.size()-1) + 1;
 		for (int i = 0; i < n1.size(); ++i) {
@@ -212,7 +212,7 @@ public class Main {
 			n2.set(i, temp);
 		}
 	}
-	
+
 	public static void mutate(List<Integer> population, List<Integer> node) {
 		int rand_index = new Random().nextInt(node.size());
 		int rand_person = new Random().nextInt(population.size());
@@ -222,12 +222,12 @@ public class Main {
 			node.set(rand_index, population.get(rand_person));
 		}
 	}
-	
+
 	public static List<Double> reproductionProbibilityDistribution(List<Double> fitnesses) {
 		double fitnessSum = fitnesses.stream().reduce(0d, Double::sum);
 		return fitnesses.stream().map(i -> i/fitnessSum).collect(Collectors.toList());
 	}
-	
+
 	public static int getReproductionCandidate(List<Double> fpd, int excludeIdx) {
 		double maxProb = 1d;
 		List<Double> _fpd = fpd;
@@ -245,11 +245,11 @@ public class Main {
 		}
 		return 0; // Should never happen...
 	}
-	
+
 	public static int randPerson(boolean[][] graph) {
 		return new Random().nextInt(graph.length);
 	}
-	
+
 	public static List<Integer> randNode(boolean[][] graph, int size) {
 		//if(size>graph.length) {System.out.println("fuckoff");System.exit(-1);}
 		List<Integer> node = new ArrayList<>();
@@ -261,12 +261,12 @@ public class Main {
 		}
 		return node;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 }//end of class Main
